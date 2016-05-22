@@ -26,6 +26,13 @@
 
 #import <UIKit/UIKit.h>
 
+typedef enum {
+    EECircularMusicModeVideo = 0,
+    EECircularMusicModePhoto,
+    EECircularMusicModePlayer,
+} EECircularMusicMode;
+
+
 @protocol EECircularMusicPlayerControlDelegate <NSObject>
 
 @optional
@@ -39,13 +46,13 @@
 @property(nonatomic, weak) id<EECircularMusicPlayerControlDelegate> delegate;
 @property(nonatomic) CGFloat progressTrackRatio;
 
+@property (nonatomic,assign) EECircularMusicMode playerMode;
+
 // Progress part
 @property(nonatomic, strong) UIColor *trackTintColor UI_APPEARANCE_SELECTOR;
 @property(nonatomic, strong) UIColor *progressTintColor UI_APPEARANCE_SELECTOR;
 @property(nonatomic, strong) UIColor *highlightedTrackTintColor UI_APPEARANCE_SELECTOR;
 @property(nonatomic, strong) UIColor *highlightedProgressTintColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic, strong) UIColor *disabledTrackTintColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic, strong) UIColor *disabledProgressTintColor UI_APPEARANCE_SELECTOR;
 @property(nonatomic) NSTimeInterval duration;
 @property(nonatomic) NSTimeInterval currentTime;
 - (void)setCurrentTime:(NSTimeInterval)currentTime animated:(BOOL)animated;
@@ -57,15 +64,6 @@
 @property(nonatomic, strong) UIColor *highlightedButtonTopTintColor UI_APPEARANCE_SELECTOR;
 @property(nonatomic, strong) UIColor *highlightedButtonBottomTintColor UI_APPEARANCE_SELECTOR;
 @property(nonatomic, strong) UIColor *highlightedIconColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic, strong) UIColor *disabledButtonTopTintColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic, strong) UIColor *disabledButtonBottomTintColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic, strong) UIColor *disabledIconColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic) BOOL playing;
-
-// Border part
-@property(nonatomic, strong) UIColor *borderColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic, strong) UIColor *highlightedBorderColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic, strong) UIColor *disabledBorderColor UI_APPEARANCE_SELECTOR;
-@property(nonatomic) CGFloat borderWidth UI_APPEARANCE_SELECTOR;
+@property(nonatomic) BOOL recording;
 
 @end

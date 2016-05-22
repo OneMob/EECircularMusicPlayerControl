@@ -14,8 +14,6 @@
 @synthesize progressTintColor = _progressTintColor;
 @synthesize highlightedTrackTintColor = _highlightedTrackTintColor;
 @synthesize highlightedProgressTintColor = _highlightedProgressTintColor;
-@synthesize disabledTrackTintColor = _disabledTrackTintColor;
-@synthesize disabledProgressTintColor = _disabledProgressTintColor;
 @synthesize roundedCorners = _roundedCorners;
 @synthesize thicknessRatio = _thicknessRatio;
 @synthesize progress = _progress;
@@ -45,8 +43,6 @@
         self.progressTintColor = layer.progressTintColor;
         self.highlightedTrackTintColor = layer.highlightedTrackTintColor;
         self.highlightedProgressTintColor = layer.highlightedTrackTintColor;
-        self.disabledTrackTintColor = layer.disabledTrackTintColor;
-        self.disabledProgressTintColor = layer.disabledProgressTintColor;
         self.roundedCorners = layer.roundedCorners;
         self.thicknessRatio = layer.thicknessRatio;
         self.progress = layer.progress;
@@ -71,22 +67,15 @@
         progressTintColor = self.highlighted ? self.highlightedProgressTintColor : self.progressTintColor;
     }
     else {
-        trackTintColor = self.disabledTrackTintColor;
-        progressTintColor = self.disabledProgressTintColor;
         CGFloat factor = 0.75f;
-        UIColor *clearColor = [UIColor clearColor];
-        if (!trackTintColor) {
-            trackTintColor = [self.trackTintColor isEqual:clearColor] ? clearColor : [self.trackTintColor colorWithAlphaComponent:factor];
-        }
-        if (!progressTintColor) {
-            progressTintColor = [self.progressTintColor isEqual:clearColor] ? clearColor : [self.progressTintColor colorWithAlphaComponent:factor];
-        }
+        trackTintColor = [self.trackTintColor colorWithAlphaComponent:factor];
+        progressTintColor = [self.progressTintColor colorWithAlphaComponent:factor];
     }
     
     CGContextSetFillColorWithColor(context, trackTintColor.CGColor);
     CGMutablePathRef trackPath = CGPathCreateMutable();
     CGPathMoveToPoint(trackPath, NULL, centerPoint.x, centerPoint.y);
-    CGPathAddArc(trackPath, NULL, centerPoint.x, centerPoint.y, radius, 2.0f * M_PI, 0.0f, TRUE);
+    CGPathAddArc(trackPath, NULL, centerPoint.x, centerPoint.y, radius, 3 * M_PI_2, 360, NO);
     CGPathCloseSubpath(trackPath);
     CGContextAddPath(context, trackPath);
     CGContextFillPath(context);
@@ -189,7 +178,7 @@
     if (animated)
     {
         CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"progress"];
-        animation.duration = fabsf(self.progress - pinnedProgress); // Same duration as UIProgressView animation
+        animation.duration = fabs(self.progress - pinnedProgress); // Same duration as UIProgressView animation
         animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
         animation.fromValue = [NSNumber numberWithFloat:self.progress];
         animation.toValue = [NSNumber numberWithFloat:pinnedProgress];
@@ -245,28 +234,6 @@
 - (void)setHighlightedProgressTintColor:(UIColor *)highlightedProgressTintColor
 {
     self.circularProgressLayer.highlightedProgressTintColor = highlightedProgressTintColor;
-    [self.circularProgressLayer setNeedsDisplay];
-}
-
-- (UIColor *)disabledTrackTintColor
-{
-    return self.circularProgressLayer.disabledTrackTintColor;
-}
-
-- (void)setDisabledTrackTintColor:(UIColor *)disabledTrackTintColor
-{
-    self.circularProgressLayer.disabledTrackTintColor = disabledTrackTintColor;
-    [self.circularProgressLayer setNeedsDisplay];
-}
-
-- (UIColor *)disabledProgressTintColor
-{
-    return self.circularProgressLayer.disabledProgressTintColor;
-}
-
-- (void)setDisabledProgressTintColor:(UIColor *)disabledProgressTintColor
-{
-    self.circularProgressLayer.disabledProgressTintColor = disabledProgressTintColor;
     [self.circularProgressLayer setNeedsDisplay];
 }
 

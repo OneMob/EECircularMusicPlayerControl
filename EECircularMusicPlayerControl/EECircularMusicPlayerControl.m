@@ -37,12 +37,10 @@
 @property(nonatomic, strong) UIColor *highlightedTopTintColor;
 @property(nonatomic, strong) UIColor *highlightedBottomTintColor;
 @property(nonatomic, strong) UIColor *highlightedIconColor;
-@property(nonatomic, strong) UIColor *disabledTopTintColor;
-@property(nonatomic, strong) UIColor *disabledBottomTintColor;
-@property(nonatomic, strong) UIColor *disabledIconColor;
 @property(nonatomic) BOOL enabled;
 @property(nonatomic) BOOL highlighted;
 @property(nonatomic) BOOL playing;
+@property(nonatomic) EECircularMusicMode playerMode;
 
 @end
 
@@ -60,7 +58,7 @@
 - (void)drawInContext:(CGContextRef)context
 {
     CGSize circleSize = self.bounds.size;
-    CGFloat iconRatio = 0.6f;
+    CGFloat iconRatio = self.playerMode == EECircularMusicModePhoto ? 0.83f : 0.6f;
     CGFloat iconFrameOffset = 0.5f * (1.0f - iconRatio);
     CGRect iconFrame = CGRectMake(iconFrameOffset * circleSize.width,
                                   iconFrameOffset * circleSize.height,
@@ -74,20 +72,10 @@
         iconColor = self.highlighted ? self.highlightedIconColor : self.iconColor;
     }
     else {
-        topTintColor = self.disabledTopTintColor;
-        bottomTintColor = self.disabledBottomTintColor;
-        iconColor = self.disabledIconColor;
         CGFloat factor = 0.75f;
-        UIColor *clearColor = [UIColor clearColor];
-        if (!topTintColor) {
-            topTintColor = [self.topTintColor isEqual:clearColor] ? clearColor : [self.topTintColor colorWithAlphaComponent:factor];
-        }
-        if (!bottomTintColor) {
-            bottomTintColor = [self.bottomTintColor isEqual:clearColor] ? clearColor : [self.bottomTintColor colorWithAlphaComponent:factor];
-        }
-        if (!iconColor) {
-            iconColor = [self.iconColor isEqual:clearColor] ? clearColor : [self.iconColor colorWithAlphaComponent:factor];
-        }
+        topTintColor = [self.topTintColor colorWithAlphaComponent:factor];
+        bottomTintColor = [self.bottomTintColor colorWithAlphaComponent:factor];
+        iconColor = [self.iconColor colorWithAlphaComponent:factor];
     }
 
     // Fill circle area
@@ -102,79 +90,43 @@
    
     // Draw play/stop icon.
     CGContextSetFillColorWithColor(context, iconColor.CGColor);
-    if (self.playing) {
-        CGFloat factor = 0.8f;
-        CGFloat originOffset = (1.0f - factor) / 2.0f;
-        CGRect rect = CGRectMake(iconFrame.origin.x + originOffset * iconFrame.size.width,
-                                 iconFrame.origin.y + originOffset * iconFrame.size.height,
-                                 factor * iconFrame.size.width,
-                                 factor * iconFrame.size.height);
-        CGContextFillRect(context, rect);
-    }
-    else {
-        CGRect triangleFrame = CGRectMake(iconFrame.origin.x + iconFrame.size.width / 3.0f / 4.0f,
-                                          iconFrame.origin.y,
-                                          iconFrame.size.width,
-                                          iconFrame.size.height);
-        CGContextBeginPath(context);
-        CGContextMoveToPoint(context, triangleFrame.origin.x, triangleFrame.origin.y);
-        CGContextAddLineToPoint(context, triangleFrame.origin.x, CGRectGetMaxY(triangleFrame));
-        CGContextAddLineToPoint(context, CGRectGetMaxX(triangleFrame), triangleFrame.origin.y + triangleFrame.size.height / 2.0f);
-        CGContextClosePath(context);
-        CGContextFillPath(context);
-    }
-}
-
-@end
-
-
-#pragma mark - EEPlayerBorderLayer
-@interface EEPlayerBorderLayer : CALayer
-
-@property(nonatomic, strong) UIColor *color;
-@property(nonatomic, strong) UIColor *highlightedColor;
-@property(nonatomic, strong) UIColor *disabledColor;
-@property(nonatomic) CGFloat width;
-@property(nonatomic) BOOL highlighted;
-@property(nonatomic) BOOL enabled;
-
-@end
-
-@implementation EEPlayerBorderLayer
-
-- (id)init
-{
-    self = [super init];
-    if (self) {
-        self.enabled = YES;
-    }
-    return self;
-}
-
-- (void)drawInContext:(CGContextRef)context
-{
-    UIColor *color;
-    if (self.enabled) {
-        color = self.highlighted ? self.highlightedColor : self.color;
-    }
-    else {
-        color = self.disabledColor;
-        if (!color) {
-            CGFloat factor = 0.75f;
-            UIColor *clearColor = [UIColor clearColor];
-            color = [self.color isEqual:clearColor] ? clearColor : [self.color colorWithAlphaComponent:factor];
+    
+    if (self.playerMode == EECircularMusicModePlayer) {
+        if (self.playing) {
+            CGFloat factor = 0.8f;
+            CGFloat originOffset = (1.0f - factor) / 2.0f;
+            CGRect rect = CGRectMake(iconFrame.origin.x + originOffset * iconFrame.size.width,
+                                     iconFrame.origin.y + originOffset * iconFrame.size.height,
+                                     factor * iconFrame.size.width,
+                                     factor * iconFrame.size.height);
+            CGContextFillRect(context, rect);
+        }
+        else {
+            CGRect triangleFrame = CGRectMake(iconFrame.origin.x + iconFrame.size.width / 3.0f / 4.0f,
+                                              iconFrame.origin.y,
+                                              iconFrame.size.width,
+                                              iconFrame.size.height);
+            CGContextBeginPath(context);
+            CGContextMoveToPoint(context, triangleFrame.origin.x, triangleFrame.origin.y);
+            CGContextAddLineToPoint(context, triangleFrame.origin.x, CGRectGetMaxY(triangleFrame));
+            CGContextAddLineToPoint(context, CGRectGetMaxX(triangleFrame), triangleFrame.origin.y + triangleFrame.size.height / 2.0f);
+            CGContextClosePath(context);
+            CGContextFillPath(context);
+        }
+        
+    } else {
+        
+        if (self.playing) {
+            CGRect innerFrame = CGRectInset(iconFrame, 1.0f, 1.0f);
+            CGContextFillRect(context, innerFrame);
+            
+        } else {
+            CGContextFillEllipseInRect(context, iconFrame);
         }
     }
-    
-    CGFloat inset = self.width / 2.0f;
-    CGRect insetFrame = CGRectInset(self.bounds, inset, inset); // To draw inside the frame.
-    CGContextSetStrokeColorWithColor(context, color.CGColor);
-    CGContextSetLineWidth(context, self.width);
-    CGContextStrokeEllipseInRect(context, insetFrame);
 }
 
 @end
-
 
 #pragma mark - EECircularMusicPlayerLayer
 @interface EECircularMusicPlayerLayer : CALayer
@@ -182,7 +134,7 @@
 @property(nonatomic) CGFloat progressTrackRatio;
 @property(nonatomic, strong) EECircularMusicPlayerDACircularProgressLayer *progressLayer;
 @property(nonatomic, strong) EEPlayerButtonLayer *buttonLayer;
-@property(nonatomic, strong) EEPlayerBorderLayer *borderLayer;
+@property(nonatomic) EECircularMusicMode playerMode;
 
 @end
 
@@ -200,14 +152,11 @@
         UIColor *topTintColor = [UIColor colorWithRed:50.0f/255.0f green:107.0f/255.0f blue:210.0f/255.0f alpha:1.0f];
         UIColor *bottomTintColor = [UIColor colorWithRed:30.0f/255.0f green:85.0f/255.0f blue:205.0f/255.0f alpha:1.0f];
         UIColor *iconColor = [UIColor colorWithWhite:210.0f/255.0f alpha:1.0f];
-        UIColor *borderColor = [UIColor clearColor];
         UIColor *highlightedTrackTintColor = [UIColor colorWithRed:118.0f/255.0f green:131.0f/255.0f blue:151.0f/255.0f alpha:1.0f];
         UIColor *highlightedProgressTintColor = [UIColor colorWithRed:42.0f/255.0f green:59.0f/255.0f blue:92.0f/255.0f alpha:1.0f];
         UIColor *highlightedTopTintColor = [UIColor colorWithRed:11.0f/255.0f green:76.0f/255.0f blue:176.0f/255.0f alpha:1.0f];
         UIColor *highlightedBottomTintColor = [UIColor colorWithRed:0.0f/255.0f green:44.0f/255.0f blue:126.0f/255.0f alpha:1.0f];
         UIColor *highlightedIconColor = [UIColor colorWithWhite:174.0f/255.0f alpha:1.0f];
-        UIColor *highlightedBorderColor = [UIColor clearColor];
-        CGFloat borderWidth = 1.0f;
 
         // Progress layer
         self.progressLayer = [EECircularMusicPlayerDACircularProgressLayer layer];
@@ -216,8 +165,6 @@
         self.progressLayer.progressTintColor = progressTintColor;
         self.progressLayer.highlightedTrackTintColor = highlightedTrackTintColor;
         self.progressLayer.highlightedProgressTintColor = highlightedProgressTintColor;
-        self.progressLayer.disabledTrackTintColor = nil;
-        self.progressLayer.disabledProgressTintColor = nil;
         self.progressLayer.roundedCorners = 0;
         [self addSublayer:self.progressLayer];
         
@@ -229,18 +176,7 @@
         self.buttonLayer.highlightedTopTintColor = highlightedTopTintColor;
         self.buttonLayer.highlightedBottomTintColor = highlightedBottomTintColor;
         self.buttonLayer.highlightedIconColor = highlightedIconColor;
-        self.buttonLayer.disabledTopTintColor = nil;
-        self.buttonLayer.disabledBottomTintColor = nil;
-        self.buttonLayer.disabledIconColor = nil;
         [self addSublayer:self.buttonLayer];
-        
-        // Border layer
-        self.borderLayer = [EEPlayerBorderLayer layer];
-        self.borderLayer.color = borderColor;
-        self.borderLayer.highlightedColor = highlightedBorderColor;
-        self.borderLayer.disabledColor = nil;
-        self.borderLayer.width = borderWidth;
-        [self addSublayer:self.borderLayer];
     }
     return self;
 }
@@ -255,10 +191,8 @@
                                         0.5f * self.progressTrackRatio * frame.size.height,
                                         buttonPartRatio * frame.size.width,
                                         buttonPartRatio * frame.size.height);
-    self.borderLayer.frame = CGRectMake(0.0f, 0.0f, frame.size.width, frame.size.height);
     [self.progressLayer setNeedsDisplay];
     [self.buttonLayer setNeedsDisplay];
-    [self.borderLayer setNeedsDisplay];
 }
 
 - (CGFloat)progressTrackRatio
@@ -270,6 +204,11 @@
 {
     self.progressLayer.thicknessRatio = progressTrackRatio;
     [self setFrame:self.frame];
+}
+
+- (void)setPlayerMode:(EECircularMusicMode)playerMode
+{
+    self.buttonLayer.playerMode = playerMode;
 }
 
 @end
@@ -316,6 +255,11 @@
     return self;     
 }
 
+- (void)setPlayerMode:(EECircularMusicMode)playerMode
+{
+    [self circularMusicPlayerLayer].playerMode = playerMode;
+}
+
 - (void)dealloc
 {
     [self.timer invalidate];
@@ -326,7 +270,6 @@
     CGFloat scale = [UIScreen mainScreen].scale;
     self.circularMusicPlayerLayer.progressLayer.contentsScale = scale;
     self.circularMusicPlayerLayer.buttonLayer.contentsScale = scale;
-    self.circularMusicPlayerLayer.borderLayer.contentsScale = scale;
 }
 
 - (void)setEnabled:(BOOL)enabled
@@ -334,10 +277,8 @@
     [super setEnabled:enabled];
     self.circularMusicPlayerLayer.progressLayer.enabled = enabled;
     self.circularMusicPlayerLayer.buttonLayer.enabled = enabled;
-    self.circularMusicPlayerLayer.borderLayer.enabled = enabled;
     [self.circularMusicPlayerLayer.progressLayer setNeedsDisplay];
     [self.circularMusicPlayerLayer.buttonLayer setNeedsDisplay];
-    [self.circularMusicPlayerLayer.borderLayer setNeedsDisplay];
 }
 
 - (void)setHighlighted:(BOOL)highlighted
@@ -345,10 +286,8 @@
     [super setHighlighted:highlighted];
     self.circularMusicPlayerLayer.progressLayer.highlighted = highlighted;
     self.circularMusicPlayerLayer.buttonLayer.highlighted = highlighted;
-    self.circularMusicPlayerLayer.borderLayer.highlighted = highlighted;
     [self.circularMusicPlayerLayer.progressLayer setNeedsDisplay];
     [self.circularMusicPlayerLayer.buttonLayer setNeedsDisplay];
-    [self.circularMusicPlayerLayer.borderLayer setNeedsDisplay];
 }
 
 - (CGFloat)progressTrackRatio
@@ -406,28 +345,6 @@
     [self.circularMusicPlayerLayer.progressLayer setNeedsDisplay];
 }
 
-- (UIColor *)disabledTrackTintColor
-{
-    return self.circularMusicPlayerLayer.progressLayer.disabledTrackTintColor;
-}
-
-- (void)setDisabledTrackTintColor:(UIColor *)disabledTrackTintColor
-{
-    self.circularMusicPlayerLayer.progressLayer.disabledTrackTintColor = disabledTrackTintColor;
-    [self.circularMusicPlayerLayer.progressLayer setNeedsDisplay];
-}
-
-- (UIColor *)disabledProgressTintColor
-{
-    return self.circularMusicPlayerLayer.progressLayer.disabledProgressTintColor;
-}
-
-- (void)setDisabledProgressTintColor:(UIColor *)disabledProgressTintColor
-{
-    self.circularMusicPlayerLayer.progressLayer.disabledProgressTintColor = disabledProgressTintColor;
-    [self.circularMusicPlayerLayer.progressLayer setNeedsDisplay];
-}
-
 - (NSTimeInterval)currentTime
 {
     return self.circularMusicPlayerLayer.progressLayer.progress * self.duration;
@@ -445,7 +362,7 @@
     if (animated)
     {
         CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"progress"];
-        animation.duration = fabsf(progress - pinnedProgress); // Same duration as UIProgressView animation
+        animation.duration = fabs(progress - pinnedProgress); // Same duration as UIProgressView animation
         animation.timingFunction = [CAMediaTimingFunction functionWithName:kCAMediaTimingFunctionEaseInEaseOut];
         animation.fromValue = [NSNumber numberWithFloat:progress];
         animation.toValue = [NSNumber numberWithFloat:pinnedProgress];
@@ -525,102 +442,25 @@
     [self.circularMusicPlayerLayer.buttonLayer setNeedsDisplay];
 }
 
-- (UIColor *)disabledButtonTopTintColor
-{
-    return self.circularMusicPlayerLayer.buttonLayer.disabledTopTintColor;
-}
-
-- (void)setDisabledButtonTopTintColor:(UIColor *)disabledButtonTopTintColor
-{
-    self.circularMusicPlayerLayer.buttonLayer.disabledTopTintColor = disabledButtonTopTintColor;
-    [self.circularMusicPlayerLayer.buttonLayer setNeedsDisplay];
-}
-
-- (UIColor *)disabledButtonBottomTintColor
-{
-    return self.circularMusicPlayerLayer.buttonLayer.disabledBottomTintColor;
-}
-
-- (void)setDisabledButtonBottomTintColor:(UIColor *)disabledButtonBottomTintColor
-{
-    self.circularMusicPlayerLayer.buttonLayer.disabledBottomTintColor = disabledButtonBottomTintColor;
-    [self.circularMusicPlayerLayer.buttonLayer setNeedsDisplay];
-}
-
-- (UIColor *)disabledIconColor
-{
-    return self.circularMusicPlayerLayer.buttonLayer.disabledIconColor;
-}
-
-- (void)setDisabledIconColor:(UIColor *)disabledIconColor
-{
-    self.circularMusicPlayerLayer.buttonLayer.disabledIconColor = disabledIconColor;
-    [self.circularMusicPlayerLayer.buttonLayer setNeedsDisplay];
-}
-
-- (BOOL)playing
+- (BOOL)recording
 {
     return self.circularMusicPlayerLayer.buttonLayer.playing;
 }
 
-- (void)setPlaying:(BOOL)playing
+- (void)setRecording:(BOOL)recording
 {
-    self.circularMusicPlayerLayer.buttonLayer.playing = playing;
+    self.circularMusicPlayerLayer.buttonLayer.playing = recording;
     [self.circularMusicPlayerLayer.buttonLayer setNeedsDisplay];
     
     [self.timer invalidate];
-    if (playing) {
-        self.timer = [NSTimer scheduledTimerWithTimeInterval:0.02 target:self selector:@selector(didTimeChange) userInfo:nil repeats:YES];
+    if (recording) {
+        self.timer = [NSTimer scheduledTimerWithTimeInterval:1.0
+                                                      target:self selector:@selector(didTimeChange) userInfo:nil repeats:YES];
     }
     else {
         self.timer = nil;
         self.currentTime = 0.0;
     }
-}
-
-#pragma mark Border Part
-- (UIColor *)borderColor
-{
-    return self.circularMusicPlayerLayer.borderLayer.color;
-}
-
-- (void)setBorderColor:(UIColor *)borderColor
-{
-    self.circularMusicPlayerLayer.borderLayer.color = borderColor;
-    [self.circularMusicPlayerLayer.borderLayer setNeedsDisplay];
-}
-
-- (UIColor *)highlightedBorderColor
-{
-    return self.circularMusicPlayerLayer.borderLayer.highlightedColor;
-}
-
-- (void)setHighlightedBorderColor:(UIColor *)highlightedBorderColor
-{
-    self.circularMusicPlayerLayer.borderLayer.highlightedColor = highlightedBorderColor;
-    [self.circularMusicPlayerLayer.borderLayer setNeedsDisplay];
-}
-
-- (UIColor *)disabledBorderColor
-{
-    return self.circularMusicPlayerLayer.borderLayer.disabledColor;
-}
-
-- (void)setDisabledBorderColor:(UIColor *)disabledBorderColor
-{
-    self.circularMusicPlayerLayer.borderLayer.disabledColor = disabledBorderColor;
-    [self.circularMusicPlayerLayer.borderLayer setNeedsDisplay];
-}
-
-- (CGFloat)borderWidth
-{
-    return self.circularMusicPlayerLayer.borderLayer.width;
-}
-
-- (void)setBorderWidth:(CGFloat)borderWidth
-{
-    self.circularMusicPlayerLayer.borderLayer.width = borderWidth;
-    [self.circularMusicPlayerLayer.borderLayer setNeedsDisplay];
 }
 
 #pragma mark Event Handler
