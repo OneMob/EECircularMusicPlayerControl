@@ -255,6 +255,11 @@
     return self;     
 }
 
+- (void)layoutSubviews
+{
+    [[self circularMusicPlayerLayer] setFrame:self.bounds];
+}
+
 - (void)setPlayerMode:(EECircularMusicMode)playerMode
 {
     [self circularMusicPlayerLayer].playerMode = playerMode;
